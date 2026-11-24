@@ -91,6 +91,8 @@ cd frontend; npm run lint; npm run build; npm test
 - Mai stampare, copiare o committare segreti (`.env`, `.env.monitoring`, chiavi API).
 - Un permesso che non si riesce a leggere o tradurre **chiude** il documento,
   non lo apre. Vale per ogni connettore.
+- I test usano il codice vero (per esempio un `LibraryStore` su un SQLite
+  temporaneo), non finti oggetti al posto del codice che stanno provando.
 - Non indebolire controlli esistenti (password "admin" rifiutata su 0.0.0.0, CSP,
   antivirus sugli upload) per far funzionare qualcosa.
 
@@ -122,6 +124,7 @@ cd frontend; npm run lint; npm run build; npm test
 | 4 | Qualità del recupero (reranker, contesto, riformulazioni) | da fare |
 | 5 | Email: file `.msg` e connettore IMAP | da fare |
 | 6 | Evidenziazione nel PDF e migrazioni dello schema | da fare |
+| 7 | Pulizia del codice (lint, controlli prima del commit) | da fare, in parallelo |
 
 Valori ammessi: `da fare`, `in corso (branch ...)`, `in PR (#...)`, `fatto (data)`,
 `bloccato (motivo)`.
@@ -315,6 +318,15 @@ parte quelle richieste dalla decisione del passo 1.1.
 merge: Nicolò deve provarlo su una cartella vera con due utenti Windows diversi.
 Scrivi nella PR i passi esatti di questa prova.
 
+### Passo 1.6 — File cancellati all'origine (C-22)
+Segui la voce **C-22** del catalogo. In una PR separata, **prima** di quella
+dei permessi NTFS:
+1. scrivi il test che dimostra il problema (importa due file da una cartella,
+   cancellane uno, risincronizza, verifica che non sia più cercabile). Se il
+   test passa già, il problema non c'è: scrivilo nel catalogo e fermati;
+2. se fallisce, correggi il connettore cartelle, poi WebDAV e S3, ciascuno con
+   il suo test. Confluence in una PR a parte.
+
 ---
 
 ## Fase 2 — Installer senza prerequisiti (1.2)
@@ -469,6 +481,8 @@ dell'allegato, correzione del 28 ottobre 2026).
   **inventato** in `evaluation/pmi_corpus/`.
 
 ### Passo 5.2 — Connettore IMAP (PR separata)
+- Prima di scrivere codice leggi il connettore IMAP di Onyx (voce **C-25** del
+  catalogo): è MIT e si può riusare con avviso di copyright.
 - Solo lettura: il connettore non deve mai segnare messaggi come letti, spostarli
   o cancellarli.
 - Le credenziali seguono le stesse regole degli altri connettori (mai nei log).
@@ -501,6 +515,31 @@ dell'allegato, correzione del 28 ottobre 2026).
   un test che parte da un database creato con lo schema attuale e verifica che,
   dopo la migrazione, documenti, permessi e versioni ci siano ancora.
 - `tests/test_postgres_parity.py` deve restare verde.
+
+### Passo 6.3 — Lettura dei file più robusta (C-15, C-16)
+- **C-15:** lettura dei PDF in un processo separato con tempo massimo.
+- **C-16:** prima il test con un DOCX che dichiara dimensioni false; se passa i
+  controlli attuali, limitare i byte effettivamente letti.
+- Una PR per voce. Possono anche essere anticipate: non dipendono da altre fasi.
+
+---
+
+## Fase 7 — Pulizia del codice (in parallelo, piccole PR)
+
+Questa fase non blocca le altre: si fa a pezzi, quando c'è tempo, una PR per
+passo. Non mescolarla con PR di funzioni nuove.
+
+### Passo 7.1 — Regole di lint in più (C-26)
+Segui la voce **C-26** del catalogo, nell'ordine indicato lì: prima DTZ e B904,
+poi la complessità a 20 con le tre funzioni attuali elencate come eccezioni,
+poi la semplificazione di una funzione per PR. **Non** cambiare il
+comportamento del codice in queste PR: i test devono restare identici.
+
+### Passo 7.2 — Controlli prima del commit (C-27)
+Un `.pre-commit-config.yaml` documentato in `DEVELOPER.md`, facoltativo.
+
+### Passo 7.3 — Stile dei commenti (C-28)
+**STOP:** solo se Nicolò lo decide.
 
 ---
 
