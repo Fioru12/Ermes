@@ -13,6 +13,11 @@ Il piano strategico, con il perché di ogni voce, è in
 Questo file è la versione operativa: cosa fare, in che ordine, come capire che è
 finito. I numeri tra parentesi, come **(1.6)**, rimandano alle voci di quel piano.
 
+Le idee prese da altri progetti RAG (RAGFlow, Onyx, Open WebUI, Kotaemon), con
+licenze e posizione nel loro codice, sono in
+[`CATALOGO_IDEE_COMPETITOR.md`](CATALOGO_IDEE_COMPETITOR.md). Le sigle come
+**C-03** rimandano a quel catalogo.
+
 ---
 
 ## Come usare questo documento
@@ -188,6 +193,12 @@ misura, non un'ottimizzazione.
 
 **Fatto quando.** La tabella è in `docs/RETRIEVAL_EVALUATION.md`, in una PR
 `docs/...`, con i tre comandi riportati per poterla rifare.
+
+### Passo 0.4 — Misurare il verificatore da solo (C-01)
+Segui la voce **C-01** del catalogo: un insieme di coppie (domanda, passaggio,
+sì/no) con trappole costruite apposta, e uno script che misura precisione e
+richiamo del verificatore. Serve a scegliere modello e prompt del verificatore
+con dati. È una PR separata dal passo 0.3.
 
 ---
 
@@ -408,11 +419,19 @@ risultato in `docs/RETRIEVAL_EVALUATION.md` e **non** si applica: anche un
   verifica.
 - Annota anche il tempo per domanda: un reranker su CPU può essere lento.
 
-### Passo 4.2 — Titolo e sezione davanti al passaggio, con i vettori (2.5)
+### Passo 4.2 — Titolo e sezione nell'indice, non nell'estratto (2.5, C-03)
 - In modalità keyword è già stato misurato: +2 domande su 127, non applicato
-  (vedi "Esperimento: titolo e sezione" nel documento di valutazione).
-- Va rimisurato **con la ricerca a vettori**, dove il contesto entra
-  nell'embedding.
+  perché l'estratto mostrato avrebbe avuto un prefisso (vedi "Esperimento:
+  titolo e sezione" nel documento di valutazione).
+- Segui la voce **C-03** del catalogo: il titolo e la sezione vanno solo nel
+  testo indicizzato, l'estratto mostrato resta quello originale. Misura in
+  modalità keyword e poi con la ricerca a vettori.
+
+### Passo 4.2-bis — Altre voci del catalogo
+Nell'ordine indicato in fondo al catalogo: **C-05** (passaggi vicini),
+**C-04** (fusione parole e vettori), **C-07** (citazioni testuali verificate),
+**C-02** (domanda al verificatore). Una voce per PR, ognuna misurata prima e
+dopo.
 
 ### Passo 4.3 — Riformulazione della domanda
 - **Leggi prima** due moduli che esistono già:
@@ -464,8 +483,10 @@ dell'allegato, correzione del 28 ottobre 2026).
 - Oggi il visualizzatore apre il PDF alla pagina giusta
   (`frontend/src/components/chat/ChatArea.tsx`, vista "PDF Pag. N"), ma non
   evidenzia il passaggio.
-- Serve salvare, durante l'importazione, la posizione del testo nella pagina, e
-  usarla nel visualizzatore.
+- Prima prova la strada della voce **C-06** del catalogo, come fa Kotaemon:
+  passare al visualizzatore l'inizio del passaggio citato e farglielo cercare
+  nella pagina. Solo se la ricerca fallisce troppo spesso, salvare la posizione
+  del testo durante l'importazione.
 - Per le pagine lette con OCR la posizione potrebbe non esserci: in quel caso si
   apre la pagina senza evidenziare, senza errori.
 
