@@ -13,6 +13,7 @@ from core.connector_scheduler import (
     sync_due_schedules,
 )
 from core.connectors.base import DeltaSyncResult, RemoteDocument
+from core.library_store import LibraryStore
 
 
 @pytest.fixture
@@ -69,12 +70,44 @@ def test_connector_schedule_store_crud(temp_sched_store):
     assert temp_sched_store.get_schedule(sched.id) is None
 
 
-def test_run_schedule_sync_full(temp_sched_store):
+class _MemoryStorage:
+    def __init__(self):
+        self.files = {}
+
+    def save(self, path, content):
+        self.files[path] = content
+
+    def delete(self, path):
+        self.files.pop(path, None)
+
+
+@pytest.fixture
+def real_store(tmp_path, monkeypatch):
+    """LibraryStore vero su SQLite temporaneo: uno store finto nascondeva che
+    le cancellazioni cercavano il documento con l'id remoto."""
+    monkeypatch.setattr("core.storage_provider.get_storage_provider", _MemoryStorage)
+    monkeypatch.setattr("core.connector_ingest._known_usernames", dict)
+    store = LibraryStore(tmp_path / "ermes.sqlite3")
+    library = store.create_library("Archivio", "", "private", owner_id="owner")
+    return store, library["id"]
+
+
+def _connector(**methods):
+    connector = MagicMock()
+    connector.source_key.return_value = "test-source"
+    connector.listing = None
+    for name, value in methods.items():
+        getattr(connector, name).return_value = value
+    return connector
+
+
+def test_run_schedule_sync_full(temp_sched_store, real_store):
+    store, library_id = real_store
     sched = temp_sched_store.create_schedule(
         name="S3 Backup",
         connector_type="s3_bucket",
         config={"bucket_name": "my-bucket", "region_name": "eu-central-1"},
-        target_library_id="lib1",
+        target_library_id=library_id,
         interval_minutes=60,
     )
 
@@ -87,34 +120,28 @@ def test_run_schedule_sync_full(temp_sched_store):
         last_modified="2026-09-21T10:00:00Z",
     )
 
-    mock_connector = MagicMock()
-    mock_connector.fetch_documents.return_value = [mock_doc]
-
-    mock_store = MagicMock()
-    mock_store.content_hash_index.return_value = {}
-    mock_store.add_document.return_value = {"id": "doc1", "job_id": "job_123"}
-
     with (
         patch("core.connector_scheduler.get_schedule_store", return_value=temp_sched_store),
-        patch("api.connectors._build_connector", return_value=mock_connector),
+        patch("api.connectors._build_connector", return_value=_connector(fetch_documents=[mock_doc])),
     ):
-        result = run_schedule_sync(sched.id, store=mock_store)
+        result = run_schedule_sync(sched.id, store=store)
         assert result["ok"] is True
         assert result["mode"] == "full"
         assert result["imported"] == 1
-        mock_store.add_document.assert_called_once()
+        assert [d["filename"] for d in store.list_documents(library_id)] == ["doc1.txt"]
 
         updated_sched = temp_sched_store.get_schedule(sched.id)
         assert updated_sched.last_status == "success"
         assert updated_sched.items_synced == 1
 
 
-def test_run_schedule_sync_delta(temp_sched_store):
+def test_run_schedule_sync_delta(temp_sched_store, real_store):
+    store, library_id = real_store
     sched = temp_sched_store.create_schedule(
         name="GDrive Delta",
         connector_type="google_drive",
         config={"service_account_json": "{}"},
-        target_library_id="lib1",
+        target_library_id=library_id,
         interval_minutes=15,
     )
     temp_sched_store.update_sync_result(
@@ -123,8 +150,16 @@ def test_run_schedule_sync_delta(temp_sched_store):
         next_delta_token="initial_token_123",
     )
 
-    mock_doc = RemoteDocument(
-        id="gdrive://file2.txt",
+    old_doc = RemoteDocument(
+        id="gdrive-file-99",
+        name="vecchio.txt",
+        content=b"Da cancellare",
+        media_type="text/plain",
+        source_url="https://drive.google.com/file99",
+        last_modified="2026-09-20T11:00:00Z",
+    )
+    new_doc = RemoteDocument(
+        id="gdrive-file-2",
         name="file2.txt",
         content=b"Aggiornato",
         media_type="text/plain",
@@ -132,32 +167,31 @@ def test_run_schedule_sync_delta(temp_sched_store):
         last_modified="2026-09-21T11:00:00Z",
     )
 
-    mock_delta = DeltaSyncResult(
+    first = DeltaSyncResult(
+        connector_type="GoogleDriveConnector", updated_documents=[old_doc], next_delta_token="token_v1b"
+    )
+    second = DeltaSyncResult(
         connector_type="GoogleDriveConnector",
-        updated_documents=[mock_doc],
-        deleted_document_ids=["deleted_doc_99"],
+        updated_documents=[new_doc],
+        deleted_document_ids=["gdrive-file-99"],
         next_delta_token="token_v2",
     )
-
-    mock_connector = MagicMock()
-    mock_connector.fetch_delta.return_value = mock_delta
-
-    mock_store = MagicMock()
-    mock_store.content_hash_index.return_value = {}
-    mock_store.add_document.return_value = {"id": "doc2", "job_id": None}
+    connector = _connector()
+    connector.fetch_delta.side_effect = [first, second]
 
     with (
         patch("core.connector_scheduler.get_schedule_store", return_value=temp_sched_store),
-        patch("api.connectors._build_connector", return_value=mock_connector),
+        patch("api.connectors._build_connector", return_value=connector),
     ):
-        result = run_schedule_sync(sched.id, store=mock_store)
+        run_schedule_sync(sched.id, store=store)
+        result = run_schedule_sync(sched.id, store=store)
         assert result["ok"] is True
         assert result["mode"] == "delta"
         assert result["imported"] == 1
         assert result["deleted"] == 1
         assert result["next_delta_token"] == "token_v2"
 
-        mock_store.delete_document.assert_called_once_with("lib1", "deleted_doc_99")
+        assert [d["filename"] for d in store.list_documents(library_id)] == ["file2.txt"]
         updated_sched = temp_sched_store.get_schedule(sched.id)
         assert updated_sched.next_delta_token == "token_v2"
 

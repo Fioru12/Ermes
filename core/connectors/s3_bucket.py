@@ -11,7 +11,7 @@ import mimetypes
 from pathlib import PurePosixPath
 from typing import Any
 
-from core.connectors.base import BaseConnector, RemoteDocument
+from core.connectors.base import BaseConnector, ListingReport, RemoteDocument
 
 _logger = logging.getLogger(__name__)
 
@@ -89,11 +89,17 @@ class S3BucketConnector(BaseConnector):
             _logger.warning("Test connessione S3 fallito: %s", msg)
             return False, f"Impossibile raggiungere il bucket '{self.bucket_name}': {msg}"
 
+    def source_key(self) -> str:
+        return f"s3:{self.endpoint_url or ''}:{self.bucket_name}/{self.prefix}"
+
     def fetch_documents(self) -> list[RemoteDocument]:
+        self.listing = None
         ok, msg = self.test_connection()
         if not ok:
             _logger.warning("S3BucketConnector test_connection fallito: %s", msg)
             return []
+        seen: set[str] = set()
+        complete = True
 
         client = self._get_client()
         documents: list[RemoteDocument] = []
@@ -106,10 +112,6 @@ class S3BucketConnector(BaseConnector):
             for page in paginator.paginate(**paginate_kwargs):
                 contents = page.get("Contents", [])
                 for item in contents:
-                    if len(documents) >= self.max_files:
-                        _logger.info("Raggiunto limite massimo di %d file da S3", self.max_files)
-                        return documents
-
                     key = item.get("Key", "")
                     # Ignora chiavi directory / vuote
                     if not key or key.endswith("/"):
@@ -120,6 +122,12 @@ class S3BucketConnector(BaseConnector):
                     if ext not in self.allowed_extensions:
                         continue
 
+                    if len(documents) >= self.max_files:
+                        _logger.info("Raggiunto limite massimo di %d file da S3", self.max_files)
+                        self.listing = ListingReport(seen_ids=frozenset(seen), complete=False)
+                        return documents
+
+                    seen.add(f"s3://{self.bucket_name}/{key}")
                     try:
                         resp = client.get_object(Bucket=self.bucket_name, Key=key)
                         content_bytes = bytes(resp["Body"].read())
@@ -149,5 +157,7 @@ class S3BucketConnector(BaseConnector):
 
         except Exception as exc:
             _logger.error("Errore durante la scansione del bucket S3 %s: %s", self.bucket_name, exc)
+            complete = False
 
+        self.listing = ListingReport(seen_ids=frozenset(seen), complete=complete)
         return documents

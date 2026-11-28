@@ -14,7 +14,7 @@ from pydantic import BaseModel, Field
 from api.auth import _require_role
 from api.libraries import _reject_source_path_inside_app, _require_library_owner_or_admin, get_library_store
 from config import cfg
-from core.connector_ingest import import_remote_document
+from core.connector_ingest import import_remote_document, prune_missing_documents, remove_remote_documents
 from core.connectors import registry
 from core.connectors.base import BaseConnector
 from core.governance import append_audit
@@ -126,7 +126,12 @@ def sync_connector(
                     errors.append(f"{rdoc.name}: Servizio antivirus non disponibile ({scan_err})")
                     continue
 
-                if import_remote_document(store, request.target_library_id, rdoc, known_hashes, storage_provider) == "duplicate":
+                if (
+                    import_remote_document(
+                        store, request.target_library_id, rdoc, known_hashes, storage_provider, connector.source_key()
+                    )
+                    == "duplicate"
+                ):
                     skipped_duplicates += 1
                     continue
                 imported += 1
@@ -134,6 +139,8 @@ def sync_connector(
             except Exception as e:
                 _logger.warning("Errore importazione documento remoto %s: %s", rdoc.name, e)
                 errors.append(f"{rdoc.name}: {e}")
+
+        deleted_count = prune_missing_documents(store, request.target_library_id, connector, storage_provider)
 
         append_audit(
             cfg.AUDIT_FILE,
@@ -143,6 +150,7 @@ def sync_connector(
                 "connector_type": request.type,
                 "library_id": request.target_library_id,
                 "imported": imported,
+                "deleted": deleted_count,
                 "skipped_duplicates": skipped_duplicates,
                 "total_found": len(remote_docs),
             },
@@ -151,6 +159,7 @@ def sync_connector(
         return {
             "ok": True,
             "imported_count": imported,
+            "deleted_count": deleted_count,
             "skipped_duplicates": skipped_duplicates,
             "total_found": len(remote_docs),
             "errors": errors,
@@ -192,7 +201,12 @@ def sync_connector_delta(
         # Inserimento / Aggiornamento documenti nuovi o modificati
         for rdoc in delta_res.updated_documents:
             try:
-                if import_remote_document(store, request.target_library_id, rdoc, known_hashes, storage_provider) == "duplicate":
+                if (
+                    import_remote_document(
+                        store, request.target_library_id, rdoc, known_hashes, storage_provider, connector.source_key()
+                    )
+                    == "duplicate"
+                ):
                     skipped_duplicates += 1
                     continue
                 imported += 1
@@ -200,16 +214,18 @@ def sync_connector_delta(
                 _logger.warning("Errore importazione delta documento %s: %s", rdoc.name, e)
                 errors.append(f"{rdoc.name}: {e}")
 
-        # Rimozione documenti cancellati alla sorgente remota
-        deleted_count = 0
-        if delta_res.deleted_document_ids:
-            library_docs = store.list_documents(request.target_library_id, _auth)
-            for d in library_docs:
-                if d.get("id") in delta_res.deleted_document_ids or d.get("filename") in delta_res.deleted_document_ids:
-                    paths = store.delete_document(request.target_library_id, d["id"])
-                    for p in paths:
-                        storage_provider.delete(p)
-                    deleted_count += 1
+        # Rimozione dei documenti cancellati alla sorgente remota. Si cerca
+        # per id remoto collegato, mai per nome file: un caricamento manuale
+        # con lo stesso nome non va toccato.
+        deleted_count = remove_remote_documents(
+            store,
+            request.target_library_id,
+            connector.source_key(),
+            list(delta_res.deleted_document_ids),
+            storage_provider,
+        )
+        # Connettori senza delta nativo: il delta e' una scansione completa.
+        deleted_count += prune_missing_documents(store, request.target_library_id, connector, storage_provider)
 
         append_audit(
             cfg.AUDIT_FILE,

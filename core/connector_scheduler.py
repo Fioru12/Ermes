@@ -240,25 +240,33 @@ def run_schedule_sync(schedule_id: str, store: LibraryStore) -> dict[str, Any]:
         raise ValueError(f"Schedule {schedule_id} non trovato")
 
     from api.connectors import _build_connector
-    from core.connector_ingest import import_remote_document
+    from core.connector_ingest import import_remote_document, prune_missing_documents, remove_remote_documents
     from core.storage_provider import get_storage_provider
 
     _logger.info("Avvio sincronizzazione schedulata per %s (%s)", schedule.name, schedule.connector_type)
     connector = _build_connector(schedule.connector_type, schedule.config)
     storage_provider = get_storage_provider()
     known_hashes = store.content_hash_index(schedule.target_library_id)
+    source_key = connector.source_key()
 
     try:
         if schedule.next_delta_token:
             delta_res = connector.fetch_delta(schedule.next_delta_token)
             imported_count = 0
             for doc in delta_res.updated_documents:
-                if import_remote_document(store, schedule.target_library_id, doc, known_hashes, storage_provider) == "duplicate":
+                if (
+                    import_remote_document(
+                        store, schedule.target_library_id, doc, known_hashes, storage_provider, source_key
+                    )
+                    == "duplicate"
+                ):
                     continue
                 imported_count += 1
 
-            for del_id in delta_res.deleted_document_ids:
-                store.delete_document(schedule.target_library_id, del_id)
+            deleted_count = remove_remote_documents(
+                store, schedule.target_library_id, source_key, list(delta_res.deleted_document_ids), storage_provider
+            )
+            deleted_count += prune_missing_documents(store, schedule.target_library_id, connector, storage_provider)
 
             sched_store.update_sync_result(
                 schedule_id=schedule.id,
@@ -271,16 +279,22 @@ def run_schedule_sync(schedule_id: str, store: LibraryStore) -> dict[str, Any]:
                 "ok": True,
                 "mode": "delta",
                 "imported": imported_count,
-                "deleted": len(delta_res.deleted_document_ids),
+                "deleted": deleted_count,
                 "next_delta_token": delta_res.next_delta_token,
             }
         else:
             docs = connector.fetch_documents()
             imported_count = 0
             for doc in docs:
-                if import_remote_document(store, schedule.target_library_id, doc, known_hashes, storage_provider) == "duplicate":
+                if (
+                    import_remote_document(
+                        store, schedule.target_library_id, doc, known_hashes, storage_provider, source_key
+                    )
+                    == "duplicate"
+                ):
                     continue
                 imported_count += 1
+            deleted_count = prune_missing_documents(store, schedule.target_library_id, connector, storage_provider)
 
             sched_store.update_sync_result(
                 schedule_id=schedule.id,
@@ -289,7 +303,7 @@ def run_schedule_sync(schedule_id: str, store: LibraryStore) -> dict[str, Any]:
                 next_delta_token=None,
                 error_message=None,
             )
-            return {"ok": True, "mode": "full", "imported": imported_count}
+            return {"ok": True, "mode": "full", "imported": imported_count, "deleted": deleted_count}
 
     except Exception as e:
         _logger.exception("Fallimento sincronizzazione per schedule %s: %s", schedule_id, e)
