@@ -56,6 +56,17 @@ class StorageConfig:
     def LOGS_DIR(self) -> str:
         return os.path.join(self.BASE_DIR, "logs")
 
+    # Le cartelle registrate come fonti (core/folder_importer.py) ereditano i
+    # permessi NTFS di ogni file, come il connettore cartelle. Permessi
+    # illeggibili (Ermes non su Windows, accesso negato) chiudono il
+    # documento. 0 = i documenti seguono solo le regole della biblioteca.
+    FOLDER_SOURCES_INHERIT_PERMISSIONS: bool = field(
+        default_factory=lambda: (
+            os.environ.get("ERMES_FOLDER_SOURCES_INHERIT_PERMISSIONS", "1").strip().lower()
+            in {"1", "true", "yes", "on"}
+        )
+    )
+
     # Backend storage: "local" (default) o "s3" (MinIO, AWS S3, Cloudflare R2, Ceph)
     STORAGE_BACKEND: str = field(default_factory=lambda: os.environ.get("ERMES_STORAGE_BACKEND", "local").lower())
     STORAGE_ENCRYPTION_ENABLED: bool = field(

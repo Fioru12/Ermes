@@ -5,6 +5,12 @@ gli utenti. Qui non vengono mai salvate credenziali: solo il percorso. La
 scansione importa i file supportati (.txt/.pdf/.docx/.md/.xlsx/.pptx/.csv/.rtf),
 salta i duplicati per
 hash del contenuto e registra gli errori senza interrompere il batch.
+
+Permessi: ogni file porta con se' chi lo puo' leggere sulla condivisione
+(permessi NTFS), con le stesse regole del connettore cartelle
+(core/connectors/ntfs_permissions.py). Permessi illeggibili chiudono il
+documento. Un file gia' importato e non cambiato riceve comunque i permessi
+attuali. Si spegne con ERMES_FOLDER_SOURCES_INHERIT_PERMISSIONS=0.
 """
 
 from __future__ import annotations
@@ -12,6 +18,7 @@ from __future__ import annotations
 import hashlib
 from pathlib import Path
 
+from core.connectors.ntfs_permissions import ntfs_acl_to_principals, read_ntfs_acl
 from core.library_store import storage_relative_path
 
 SUPPORTED_EXTENSIONS = {".txt", ".md", ".markdown", ".pdf", ".docx", ".xlsx", ".pptx", ".csv", ".rtf", ".eml"}
@@ -59,7 +66,12 @@ def scan_import_source(
         result["failed"].append({"file": str(root), "error": "Cartella non raggiungibile dall'account del server"})
         return result
 
-    known_hashes = store.existing_content_hashes(library_id)
+    from config import cfg
+    from core.connector_ingest import principals_allow_list
+
+    inherit = bool(getattr(cfg, "FOLDER_SOURCES_INHERIT_PERMISSIONS", True))
+    hash_to_document = store.content_hash_index(library_id)
+    known_hashes = set(hash_to_document)
     all_files = sorted((p for p in root.rglob("*") if p.is_file()), key=lambda p: str(p).lower())
     files = []
     for candidate in all_files:
@@ -86,11 +98,25 @@ def scan_import_source(
                     result["failed"].append({"file": file_path.name, "error": f"File malevolo bloccato ({virus})"})
                     continue
             except AntivirusScanError as scan_err:
-                result["failed"].append({"file": file_path.name, "error": f"Servizio antivirus non disponibile: {scan_err}"})
+                result["failed"].append(
+                    {"file": file_path.name, "error": f"Servizio antivirus non disponibile: {scan_err}"}
+                )
                 continue
 
+            allow_list = (
+                principals_allow_list(
+                    store, library_id, ntfs_acl_to_principals(read_ntfs_acl(file_path)), file_path.name
+                )
+                if inherit
+                else None
+            )
             digest = hashlib.sha256(content).hexdigest()
             if digest in known_hashes:
+                # Il file non e' cambiato, i permessi forse si': un accesso
+                # tolto sulla condivisione deve sparire anche qui.
+                existing = hash_to_document.get(digest)
+                if allow_list is not None and existing:
+                    store.set_document_acl(library_id, existing, allow_list)
                 result["skipped_duplicates"].append(file_path.name)
                 continue
             extension = file_path.suffix.lower()
@@ -106,9 +132,11 @@ def scan_import_source(
                 storage_path=storage_relative_path(library_id, stored_filename),
                 status="queued",
                 chunks=[],
+                allowed_usernames=allow_list,
             )
             job = store.start_ingestion_job(library_id, file_path.name, document_id=document["id"])
             known_hashes.add(digest)
+            hash_to_document[digest] = document["id"]
             result["imported"].append({"filename": file_path.name, "document_id": document["id"], "job_id": job["id"]})
         except Exception as error:  # un file corrotto non ferma la scansione
             result["failed"].append({"file": file_path.name, "error": str(error)})

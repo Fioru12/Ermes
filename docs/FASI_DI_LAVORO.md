@@ -118,7 +118,7 @@ cd frontend; npm run lint; npm run build; npm test
 | Fase | Contenuto | Stato |
 |---|---|---|
 | 0 | Misurare ibrida + verifica sulla suite PMI | da fare |
-| 1 | Permessi NTFS nel connettore cartelle | in PR (28 novembre 2026): mancano la prova su una condivisione vera (1.4), le fonti con Folder Watcher (1.7) e Confluence |
+| 1 | Permessi NTFS nel connettore cartelle | fatto il 28 novembre 2026 per connettore cartelle (PR #117) e fonti (1.7). Mancano: prova su una condivisione vera (1.4), cancellazioni delle fonti, Confluence |
 | 2 | Installer senza prerequisiti | da fare |
 | 3 | Utenti pilota e domande vere nel gold set | da fare |
 | 4 | Qualità del recupero (reranker, contesto, riformulazioni) | da fare |
@@ -320,12 +320,19 @@ parte quelle richieste dalla decisione del passo 1.1.
 merge: Nicolò deve provarlo su una cartella vera con due utenti Windows diversi.
 Scrivi nella PR i passi esatti di questa prova.
 
-### Passo 1.7 — Le fonti con scansione automatica
+### Passo 1.7 — Le fonti con scansione automatica — fatto (28 novembre 2026)
 Trovato il 28 novembre 2026: oltre al connettore cartelle, le cartelle si
 possono registrare come **fonti** (`core/folder_importer.py`, scansionate dal
 Folder Watcher). Quella strada non legge i permessi NTFS, e la guida per
 l'azienda la consigliava. Va portata sulle stesse regole del connettore
 (`core/connectors/ntfs_permissions.py`), con i suoi test. PR separata.
+
+### Passo 1.8 — Le fonti non tolgono i file cancellati
+Le fonti (`core/folder_importer.py`) importano i file nuovi ma non tolgono
+quelli spariti dalla cartella: lo stesso problema corretto per i connettori
+il 28 novembre 2026 (voce C-22 del catalogo). Va portata la stessa logica
+(collegamento al file d'origine, cancellazione solo con elenco completo),
+con i suoi test. PR separata.
 
 ### Passo 1.6 — File cancellati all'origine (C-22) — fatto, tranne Confluence
 Segui la voce **C-22** del catalogo. In una PR separata, **prima** di quella
