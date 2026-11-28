@@ -19,7 +19,7 @@ policy on copyleft needs to see them before adopting the product.
 |---|---|---|
 | `psycopg` (Python) | GNU Lesser General Public License v3 (LGPLv3) | see the note below |
 | `caniuse-lite` (JavaScript) | CC-BY-4.0 | build time only, not shipped in the bundle |
-| `@axe-core/playwright`, `axe-core` (JavaScript) | MPL-2.0 | build time only, not shipped in the bundle |
+| `@axe-core/playwright`, `axe-core`, `lightningcss` (+11 more) (JavaScript) | MPL-2.0 | build time only, not shipped in the bundle |
 | `@fontsource-variable/jetbrains-mono`, `@fontsource-variable/source-serif-4` (JavaScript) | OFL-1.1 | build time only, not shipped in the bundle |
 
 **`psycopg` (LGPL-3.0) is optional.** It is the PostgreSQL driver: the product
@@ -42,62 +42,63 @@ Declared in `requirements.txt`.
 |---|---|---|
 | `argon2-cffi` | 25.1.0 | MIT |
 | `defusedxml` | 0.7.1 | PSFL |
-| `fastapi` | 0.136.3 | MIT |
-| `filelock` | 3.32.7 | MIT |
+| `fastapi` | 0.162.0 | MIT |
+| `filelock` | 4.2.1 | MIT |
 | `httpx` | 0.28.1 | BSD-3-Clause |
-| `langfuse` | 4.17.0 | MIT |
+| `langfuse` | 4.18.0 | MIT |
 | `prometheus-client` | 0.26.0 | Apache-2.0 AND BSD-2-Clause |
 | `psycopg` | 3.3.6 | GNU Lesser General Public License v3 (LGPLv3) |
 | `pydantic` | 2.14.1 | MIT |
 | `PyJWT` | 2.15.1 | MIT |
-| `pypdf` | 6.20.0 | BSD-3-Clause |
+| `pypdf` | 6.21.2 | BSD-3-Clause |
 | `pypdfium2` | 5.14.0 | BSD-3-Clause, Apache-2.0, dependency licenses |
 | `pytesseract` | 0.3.13 | Apache License 2.0 |
 | `pytest` | 9.1.1 | MIT |
-| `pytest-asyncio` | 1.4.0 | Apache-2.0 |
+| `pytest-asyncio` | 1.4.1 | Apache-2.0 |
 | `pytest-benchmark` | 5.3.0 | BSD-2-Clause |
 | `pytest-timeout` | 2.4.0 | MIT |
 | `python-docx` | 1.2.0 | MIT |
 | `python-dotenv` | 1.2.4 | BSD-3-Clause |
 | `python-multipart` | 0.0.32 | Apache-2.0 |
-| `striprtf` | 0.0.33 | BSD-3-Clause |
+| `pywin32` | 311 | PSF |
+| `striprtf` | 0.0.35 | BSD-3-Clause |
 | `uvicorn` | 0.54.0 | BSD-3-Clause |
 
 ## JavaScript — application and build dependencies
 
-Declared in `frontend/package.json` (27 direct, 402 resolved in the lock file).
+Declared in `frontend/package.json` (27 direct, 381 resolved in the lock file).
 
 | Package | Version | License |
 |---|---|---|
-| `@axe-core/playwright` | 4.10.2 | MPL-2.0 |
+| `@axe-core/playwright` | 4.14.0 | MPL-2.0 |
 | `@eslint/js` | 10.0.1 | MIT |
 | `@fontsource-variable/jetbrains-mono` | 5.3.0 | OFL-1.1 |
 | `@fontsource-variable/source-serif-4` | 5.3.1 | OFL-1.1 |
-| `@playwright/test` | 1.64.0 | Apache-2.0 |
+| `@playwright/test` | 1.64.1 | Apache-2.0 |
+| `@tailwindcss/postcss` | 4.3.3 | MIT |
 | `@testing-library/jest-dom` | 6.9.1 | MIT |
 | `@testing-library/react` | 16.3.3 | MIT |
-| `@testing-library/user-event` | 14.6.7 | MIT |
+| `@testing-library/user-event` | 14.6.8 | MIT |
 | `@types/react` | 18.3.31 | MIT |
 | `@types/react-dom` | 18.3.7 | MIT |
 | `@vitejs/plugin-react` | 4.7.0 | MIT |
-| `autoprefixer` | 10.6.1 | MIT |
-| `eslint` | 10.12.0 | MIT |
+| `eslint` | 10.13.0 | MIT |
 | `eslint-plugin-react-hooks` | 7.1.1 | MIT |
 | `eslint-plugin-react-refresh` | 0.5.7 | MIT |
 | `globals` | 17.13.0 | MIT |
 | `jsdom` | 29.1.1 | MIT |
 | `lucide-react` | 0.577.0 | ISC |
 | `openapi-typescript` | 7.13.0 | MIT |
-| `postcss` | 8.5.29 | MIT |
+| `postcss` | 8.5.31 | MIT |
 | `react` | 18.3.1 | MIT |
 | `react-dom` | 18.3.1 | MIT |
-| `tailwindcss` | 3.4.19 | MIT |
+| `tailwindcss` | 4.3.3 | MIT |
 | `typescript` | 5.9.3 | Apache-2.0 |
-| `typescript-eslint` | 8.71.1 | MIT |
+| `typescript-eslint` | 8.72.0 | MIT |
 | `vite` | 7.3.7 | MIT |
-| `vitest` | 4.1.11 | MIT |
+| `vitest` | 4.1.12 | MIT |
 
-Licenses across the full resolved tree: MIT (335), Apache-2.0 (23), ISC (19), BSD-2-Clause (8), BlueOak-1.0.0 (4), BSD-3-Clause (3), MPL-2.0 (2), MIT-0 (2), OFL-1.1 (2), Python-2.0 (1), CC-BY-4.0 (1), CC0-1.0 (1), (MIT OR CC0-1.0) (1).
+Licenses across the full resolved tree: MIT (305), Apache-2.0 (22), ISC (16), MPL-2.0 (14), BSD-2-Clause (8), BlueOak-1.0.0 (4), BSD-3-Clause (3), MIT-0 (2), OFL-1.1 (2), 0BSD (1), Python-2.0 (1), CC-BY-4.0 (1), CC0-1.0 (1), (MIT OR CC0-1.0) (1).
 
 ## Machine-readable SBOM
 

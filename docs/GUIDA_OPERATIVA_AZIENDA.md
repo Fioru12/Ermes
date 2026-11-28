@@ -152,6 +152,10 @@ Per far comprendere a Ermes la terminologia interna (sigle, acronimi, gergo cont
 1. **Cartelle Condivise di Rete**:
    - Nel tab **Connettori**, inserire il percorso UNC o il mount locale (es. `\\nas-server\procedure_aziendali` o `/mnt/nas/procedure`).
    - Il daemon **Folder Watcher** integrato esegue periodicamente la scansione rilevando nuovi file o revisioni aggiornate in background.
+   - **Chi vede cosa.** Il **connettore cartelle** (tab Connettori) legge i permessi NTFS di ogni file: un documento che sulla condivisione possono leggere solo alcune persone resta visibile in Ermes solo a loro (se esiste un utente Ermes con lo stesso nome) e agli amministratori. Un file leggibile da tutti (Everyone, Domain Users e simili) segue le regole della biblioteca.
+   - **Se i permessi non si leggono, il documento resta chiuso**: visibile solo al proprietario della biblioteca e agli amministratori. Succede se Ermes non gira su Windows (per esempio in Docker su Linux), oppure se l'account di Ermes non puo' leggere i permessi. La prova di connessione del connettore lo segnala. Per tornare alle sole regole della biblioteca, impostare `inherit_permissions: false` nella configurazione del connettore.
+   - **Gruppi.** Un permesso dato a un gruppo Windows (es. `AZIENDA\Contabilita`) vale solo se in Ermes esiste un utente con lo stesso nome: i gruppi non vengono espansi nei loro membri. Conviene dare i permessi alle persone, o verificare chi vede cosa dopo la prima sincronizzazione.
+   - **Attenzione:** le cartelle registrate come **fonti** con la scansione automatica (Folder Watcher) **non** leggono i permessi NTFS: i documenti seguono le regole della biblioteca. Per cartelle con file riservati usare il connettore cartelle.
 2. **Microsoft SharePoint / OneDrive**:
    - Configurare in `.env` le credenziali `MS_GRAPH_TENANT_ID`, `MS_GRAPH_CLIENT_ID`, `MS_GRAPH_CLIENT_SECRET` e `MS_GRAPH_DRIVE_ID`.
 

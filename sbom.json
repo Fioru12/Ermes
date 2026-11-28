@@ -1,8 +1,8 @@
 {
   "components": [
     {
-      "bom-ref": "requirements-L46",
-      "description": "requirements line 46: PyJWT[crypto]==2.13.0",
+      "bom-ref": "requirements-L57",
+      "description": "requirements line 57: PyJWT[crypto]==2.15.1",
       "externalReferences": [
         {
           "comment": "implicit dist url",
@@ -17,13 +17,13 @@
           "value": "crypto"
         }
       ],
-      "purl": "pkg:pypi/pyjwt@2.13.0",
+      "purl": "pkg:pypi/pyjwt@2.15.1",
       "type": "library",
-      "version": "2.13.0"
+      "version": "2.15.1"
     },
     {
-      "bom-ref": "requirements-L58",
-      "description": "requirements line 58: argon2-cffi==25.1.0",
+      "bom-ref": "requirements-L69",
+      "description": "requirements line 69: argon2-cffi==25.1.0",
       "externalReferences": [
         {
           "comment": "implicit dist url",
@@ -37,8 +37,23 @@
       "version": "25.1.0"
     },
     {
+      "bom-ref": "requirements-L41",
+      "description": "requirements line 41: defusedxml==0.7.1",
+      "externalReferences": [
+        {
+          "comment": "implicit dist url",
+          "type": "distribution",
+          "url": "https://pypi.org/simple/defusedxml/"
+        }
+      ],
+      "name": "defusedxml",
+      "purl": "pkg:pypi/defusedxml@0.7.1",
+      "type": "library",
+      "version": "0.7.1"
+    },
+    {
       "bom-ref": "requirements-L5",
-      "description": "requirements line 5: fastapi==0.136.1",
+      "description": "requirements line 5: fastapi==0.162.0",
       "externalReferences": [
         {
           "comment": "implicit dist url",
@@ -47,13 +62,13 @@
         }
       ],
       "name": "fastapi",
-      "purl": "pkg:pypi/fastapi@0.136.1",
+      "purl": "pkg:pypi/fastapi@0.162.0",
       "type": "library",
-      "version": "0.136.1"
+      "version": "0.162.0"
     },
     {
-      "bom-ref": "requirements-L55",
-      "description": "requirements line 55: filelock==3.29.0",
+      "bom-ref": "requirements-L66",
+      "description": "requirements line 66: filelock==4.2.1",
       "externalReferences": [
         {
           "comment": "implicit dist url",
@@ -62,13 +77,13 @@
         }
       ],
       "name": "filelock",
-      "purl": "pkg:pypi/filelock@3.29.0",
+      "purl": "pkg:pypi/filelock@4.2.1",
       "type": "library",
-      "version": "3.29.0"
+      "version": "4.2.1"
     },
     {
-      "bom-ref": "requirements-L41",
-      "description": "requirements line 41: httpx==0.28.1",
+      "bom-ref": "requirements-L52",
+      "description": "requirements line 52: httpx==0.28.1",
       "externalReferences": [
         {
           "comment": "implicit dist url",
@@ -82,8 +97,8 @@
       "version": "0.28.1"
     },
     {
-      "bom-ref": "requirements-L64",
-      "description": "requirements line 64: langfuse==4.14.4",
+      "bom-ref": "requirements-L75",
+      "description": "requirements line 75: langfuse==4.18.0",
       "externalReferences": [
         {
           "comment": "implicit dist url",
@@ -92,13 +107,13 @@
         }
       ],
       "name": "langfuse",
-      "purl": "pkg:pypi/langfuse@4.14.4",
+      "purl": "pkg:pypi/langfuse@4.18.0",
       "type": "library",
-      "version": "4.14.4"
+      "version": "4.18.0"
     },
     {
-      "bom-ref": "requirements-L76",
-      "description": "requirements line 76: prometheus-client==0.26.0",
+      "bom-ref": "requirements-L87",
+      "description": "requirements line 87: prometheus-client==0.26.0",
       "externalReferences": [
         {
           "comment": "implicit dist url",
@@ -112,8 +127,8 @@
       "version": "0.26.0"
     },
     {
-      "bom-ref": "requirements-L52",
-      "description": "requirements line 52: psycopg[binary]==3.2.10",
+      "bom-ref": "requirements-L63",
+      "description": "requirements line 63: psycopg[binary]==3.3.6",
       "externalReferences": [
         {
           "comment": "implicit dist url",
@@ -128,13 +143,13 @@
           "value": "binary"
         }
       ],
-      "purl": "pkg:pypi/psycopg@3.2.10",
+      "purl": "pkg:pypi/psycopg@3.3.6",
       "type": "library",
-      "version": "3.2.10"
+      "version": "3.3.6"
     },
     {
       "bom-ref": "requirements-L7",
-      "description": "requirements line 7: pydantic==2.13.4",
+      "description": "requirements line 7: pydantic==2.14.1",
       "externalReferences": [
         {
           "comment": "implicit dist url",
@@ -143,13 +158,13 @@
         }
       ],
       "name": "pydantic",
-      "purl": "pkg:pypi/pydantic@2.13.4",
+      "purl": "pkg:pypi/pydantic@2.14.1",
       "type": "library",
-      "version": "2.13.4"
+      "version": "2.14.1"
     },
     {
       "bom-ref": "requirements-L24",
-      "description": "requirements line 24: pypdf==6.16.1",
+      "description": "requirements line 24: pypdf==6.21.2",
       "externalReferences": [
         {
           "comment": "implicit dist url",
@@ -158,13 +173,13 @@
         }
       ],
       "name": "pypdf",
-      "purl": "pkg:pypi/pypdf@6.16.1",
+      "purl": "pkg:pypi/pypdf@6.21.2",
       "type": "library",
-      "version": "6.16.1"
+      "version": "6.21.2"
     },
     {
       "bom-ref": "requirements-L30",
-      "description": "requirements line 30: pypdfium2==5.13.0",
+      "description": "requirements line 30: pypdfium2==5.14.0",
       "externalReferences": [
         {
           "comment": "implicit dist url",
@@ -173,9 +188,9 @@
         }
       ],
       "name": "pypdfium2",
-      "purl": "pkg:pypi/pypdfium2@5.13.0",
+      "purl": "pkg:pypi/pypdfium2@5.14.0",
       "type": "library",
-      "version": "5.13.0"
+      "version": "5.14.0"
     },
     {
       "bom-ref": "requirements-L31",
@@ -193,8 +208,8 @@
       "version": "0.3.13"
     },
     {
-      "bom-ref": "requirements-L67",
-      "description": "requirements line 67: pytest==9.0.3",
+      "bom-ref": "requirements-L78",
+      "description": "requirements line 78: pytest==9.1.1",
       "externalReferences": [
         {
           "comment": "implicit dist url",
@@ -203,13 +218,13 @@
         }
       ],
       "name": "pytest",
-      "purl": "pkg:pypi/pytest@9.0.3",
+      "purl": "pkg:pypi/pytest@9.1.1",
       "type": "library",
-      "version": "9.0.3"
+      "version": "9.1.1"
     },
     {
-      "bom-ref": "requirements-L69",
-      "description": "requirements line 69: pytest-asyncio==1.3.0",
+      "bom-ref": "requirements-L80",
+      "description": "requirements line 80: pytest-asyncio==1.4.1",
       "externalReferences": [
         {
           "comment": "implicit dist url",
@@ -218,13 +233,13 @@
         }
       ],
       "name": "pytest-asyncio",
-      "purl": "pkg:pypi/pytest-asyncio@1.3.0",
+      "purl": "pkg:pypi/pytest-asyncio@1.4.1",
       "type": "library",
-      "version": "1.3.0"
+      "version": "1.4.1"
     },
     {
-      "bom-ref": "requirements-L75",
-      "description": "requirements line 75: pytest-benchmark==5.3.0",
+      "bom-ref": "requirements-L86",
+      "description": "requirements line 86: pytest-benchmark==5.3.0",
       "externalReferences": [
         {
           "comment": "implicit dist url",
@@ -238,8 +253,8 @@
       "version": "5.3.0"
     },
     {
-      "bom-ref": "requirements-L68",
-      "description": "requirements line 68: pytest-timeout==2.4.0",
+      "bom-ref": "requirements-L79",
+      "description": "requirements line 79: pytest-timeout==2.4.0",
       "externalReferences": [
         {
           "comment": "implicit dist url",
@@ -268,8 +283,8 @@
       "version": "1.2.0"
     },
     {
-      "bom-ref": "requirements-L38",
-      "description": "requirements line 38: python-dotenv==1.2.2",
+      "bom-ref": "requirements-L49",
+      "description": "requirements line 49: python-dotenv==1.2.4",
       "externalReferences": [
         {
           "comment": "implicit dist url",
@@ -278,13 +293,13 @@
         }
       ],
       "name": "python-dotenv",
-      "purl": "pkg:pypi/python-dotenv@1.2.2",
+      "purl": "pkg:pypi/python-dotenv@1.2.4",
       "type": "library",
-      "version": "1.2.2"
+      "version": "1.2.4"
     },
     {
       "bom-ref": "requirements-L11",
-      "description": "requirements line 11: python-multipart==0.0.31",
+      "description": "requirements line 11: python-multipart==0.0.32",
       "externalReferences": [
         {
           "comment": "implicit dist url",
@@ -293,13 +308,28 @@
         }
       ],
       "name": "python-multipart",
-      "purl": "pkg:pypi/python-multipart@0.0.31",
+      "purl": "pkg:pypi/python-multipart@0.0.32",
       "type": "library",
-      "version": "0.0.31"
+      "version": "0.0.32"
+    },
+    {
+      "bom-ref": "requirements-L46",
+      "description": "requirements line 46: pywin32==311; sys_platform == \"win32\"",
+      "externalReferences": [
+        {
+          "comment": "implicit dist url",
+          "type": "distribution",
+          "url": "https://pypi.org/simple/pywin32/"
+        }
+      ],
+      "name": "pywin32",
+      "purl": "pkg:pypi/pywin32@311",
+      "type": "library",
+      "version": "311"
     },
     {
       "bom-ref": "requirements-L35",
-      "description": "requirements line 35: striprtf==0.0.33",
+      "description": "requirements line 35: striprtf==0.0.35",
       "externalReferences": [
         {
           "comment": "implicit dist url",
@@ -308,13 +338,13 @@
         }
       ],
       "name": "striprtf",
-      "purl": "pkg:pypi/striprtf@0.0.33",
+      "purl": "pkg:pypi/striprtf@0.0.35",
       "type": "library",
-      "version": "0.0.33"
+      "version": "0.0.35"
     },
     {
       "bom-ref": "requirements-L6",
-      "description": "requirements line 6: uvicorn[standard]==0.47.0",
+      "description": "requirements line 6: uvicorn[standard]==0.54.0",
       "externalReferences": [
         {
           "comment": "implicit dist url",
@@ -329,35 +359,14 @@
           "value": "standard"
         }
       ],
-      "purl": "pkg:pypi/uvicorn@0.47.0",
+      "purl": "pkg:pypi/uvicorn@0.54.0",
       "type": "library",
-      "version": "0.47.0"
-    },
-    {
-      "bom-ref": "requirements-L41-defusedxml",
-      "description": "requirements line 41: defusedxml==0.7.1",
-      "externalReferences": [
-        {
-          "comment": "implicit dist url",
-          "type": "distribution",
-          "url": "https://pypi.org/simple/defusedxml/"
-        }
-      ],
-      "name": "defusedxml",
-      "purl": "pkg:pypi/defusedxml@0.7.1",
-      "type": "library",
-      "version": "0.7.1"
+      "version": "0.54.0"
     }
   ],
   "dependencies": [
     {
-      "ref": "requirements-L41-defusedxml"
-    },
-    {
       "ref": "requirements-L11"
-    },
-    {
-      "ref": "requirements-L41-defusedxml"
     },
     {
       "ref": "requirements-L19"
@@ -375,13 +384,13 @@
       "ref": "requirements-L35"
     },
     {
-      "ref": "requirements-L38"
-    },
-    {
       "ref": "requirements-L41"
     },
     {
       "ref": "requirements-L46"
+    },
+    {
+      "ref": "requirements-L49"
     },
     {
       "ref": "requirements-L5"
@@ -390,22 +399,16 @@
       "ref": "requirements-L52"
     },
     {
-      "ref": "requirements-L55"
-    },
-    {
-      "ref": "requirements-L58"
+      "ref": "requirements-L57"
     },
     {
       "ref": "requirements-L6"
     },
     {
-      "ref": "requirements-L64"
+      "ref": "requirements-L63"
     },
     {
-      "ref": "requirements-L67"
-    },
-    {
-      "ref": "requirements-L68"
+      "ref": "requirements-L66"
     },
     {
       "ref": "requirements-L69"
@@ -417,11 +420,23 @@
       "ref": "requirements-L75"
     },
     {
-      "ref": "requirements-L76"
+      "ref": "requirements-L78"
+    },
+    {
+      "ref": "requirements-L79"
+    },
+    {
+      "ref": "requirements-L80"
+    },
+    {
+      "ref": "requirements-L86"
+    },
+    {
+      "ref": "requirements-L87"
     }
   ],
   "metadata": {
-    "timestamp": "2026-09-20T23:05:40.483458+00:00",
+    "timestamp": "2026-11-28T02:14:43.059106+00:00",
     "tools": {
       "components": [
         {
@@ -525,7 +540,7 @@
       ]
     }
   },
-  "serialNumber": "urn:uuid:e9042f0a-e425-491e-b80a-917769ed4b0c",
+  "serialNumber": "urn:uuid:0d933eca-1e53-4cb7-8072-74555f1683b9",
   "version": 1,
   "$schema": "http://cyclonedx.org/schema/bom-1.6.schema.json",
   "bomFormat": "CycloneDX",

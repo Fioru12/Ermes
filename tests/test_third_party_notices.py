@@ -45,13 +45,21 @@ PERMISSIVE = (
 )
 
 
-def _dichiarate() -> list[str]:
+def _dichiarate(solo_questa_piattaforma: bool = False) -> list[str]:
+    """Nomi in requirements.txt. Con `solo_questa_piattaforma` esclude quelli
+    il cui marcatore non vale qui (pywin32 su Linux): non sono installati, e
+    leggerne la licenza farebbe saltare l'intero test invece di quella riga."""
+    from packaging.markers import Marker
+
     nomi = []
     for riga in (RADICE / "requirements.txt").read_text(encoding="utf-8").splitlines():
         riga = riga.split("#")[0].strip()
         if not riga or riga.startswith("-"):
             continue
-        nomi.append(re.split(r"[=<>!\[]", riga)[0].strip())
+        requisito, _, marcatore = riga.partition(";")
+        if solo_questa_piattaforma and marcatore.strip() and not Marker(marcatore.strip()).evaluate():
+            continue
+        nomi.append(re.split(r"[=<>!\[]", requisito)[0].strip())
     return sorted(set(nomi), key=str.lower)
 
 
@@ -84,7 +92,7 @@ def test_every_declared_dependency_appears_in_the_inventory():
 def test_the_inventory_does_not_claim_every_dependency_is_permissive_unless_true():
     """La riga che era falsa. Se torna, questo test la becca."""
     testo = NOTICES.read_text(encoding="utf-8")
-    non_permissive = [n for n in _dichiarate() if (lic := _licenza(n)) and not any(p in lic.lower() for p in PERMISSIVE)]
+    non_permissive = [n for n in _dichiarate(True) if (lic := _licenza(n)) and not any(p in lic.lower() for p in PERMISSIVE)]
 
     if non_permissive:
         assert "Every declared dependency is under a permissive license" not in testo, (
@@ -99,7 +107,7 @@ def test_non_permissive_dependencies_are_named_in_the_inventory():
     quali sono le eccezioni e dove si applicano."""
     testo = NOTICES.read_text(encoding="utf-8")
 
-    for nome in _dichiarate():
+    for nome in _dichiarate(True):
         licenza = _licenza(nome)
         if licenza and not any(p in licenza.lower() for p in PERMISSIVE):
             assert f"`{nome}`" in testo, f"{nome} ({licenza}) non compare nell'inventario"
