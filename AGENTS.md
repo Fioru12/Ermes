@@ -5,6 +5,9 @@ contiene le regole sempre valide (Git, test, onestà dei numeri, sicurezza) e le
 fasi di lavoro in ordine, con i passi, le verifiche e i punti in cui fermarsi a
 chiedere.
 
+Per le idee prese da altri progetti RAG, con le regole sulle licenze, leggi
+[`docs/CATALOGO_IDEE_COMPETITOR.md`](docs/CATALOGO_IDEE_COMPETITOR.md).
+
 In breve:
 - mai push o merge su `main`: branch nuovo e pull request;
 - mai abbassare le soglie di `tests/test_library_evaluation.py`;

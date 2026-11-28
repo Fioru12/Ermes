@@ -13,6 +13,11 @@ Il piano strategico, con il perché di ogni voce, è in
 Questo file è la versione operativa: cosa fare, in che ordine, come capire che è
 finito. I numeri tra parentesi, come **(1.6)**, rimandano alle voci di quel piano.
 
+Le idee prese da altri progetti RAG (RAGFlow, Onyx, Open WebUI, Kotaemon), con
+licenze e posizione nel loro codice, sono in
+[`CATALOGO_IDEE_COMPETITOR.md`](CATALOGO_IDEE_COMPETITOR.md). Le sigle come
+**C-03** rimandano a quel catalogo.
+
 ---
 
 ## Come usare questo documento
@@ -86,6 +91,8 @@ cd frontend; npm run lint; npm run build; npm test
 - Mai stampare, copiare o committare segreti (`.env`, `.env.monitoring`, chiavi API).
 - Un permesso che non si riesce a leggere o tradurre **chiude** il documento,
   non lo apre. Vale per ogni connettore.
+- I test usano il codice vero (per esempio un `LibraryStore` su un SQLite
+  temporaneo), non finti oggetti al posto del codice che stanno provando.
 - Non indebolire controlli esistenti (password "admin" rifiutata su 0.0.0.0, CSP,
   antivirus sugli upload) per far funzionare qualcosa.
 
@@ -117,6 +124,7 @@ cd frontend; npm run lint; npm run build; npm test
 | 4 | Qualità del recupero (reranker, contesto, riformulazioni) | da fare |
 | 5 | Email: file `.msg` e connettore IMAP | da fare |
 | 6 | Evidenziazione nel PDF e migrazioni dello schema | da fare |
+| 7 | Pulizia del codice (lint, controlli prima del commit) | da fare, in parallelo |
 
 Valori ammessi: `da fare`, `in corso (branch ...)`, `in PR (#...)`, `fatto (data)`,
 `bloccato (motivo)`.
@@ -188,6 +196,12 @@ misura, non un'ottimizzazione.
 
 **Fatto quando.** La tabella è in `docs/RETRIEVAL_EVALUATION.md`, in una PR
 `docs/...`, con i tre comandi riportati per poterla rifare.
+
+### Passo 0.4 — Misurare il verificatore da solo (C-01)
+Segui la voce **C-01** del catalogo: un insieme di coppie (domanda, passaggio,
+sì/no) con trappole costruite apposta, e uno script che misura precisione e
+richiamo del verificatore. Serve a scegliere modello e prompt del verificatore
+con dati. È una PR separata dal passo 0.3.
 
 ---
 
@@ -304,6 +318,15 @@ parte quelle richieste dalla decisione del passo 1.1.
 merge: Nicolò deve provarlo su una cartella vera con due utenti Windows diversi.
 Scrivi nella PR i passi esatti di questa prova.
 
+### Passo 1.6 — File cancellati all'origine (C-22)
+Segui la voce **C-22** del catalogo. In una PR separata, **prima** di quella
+dei permessi NTFS:
+1. scrivi il test che dimostra il problema (importa due file da una cartella,
+   cancellane uno, risincronizza, verifica che non sia più cercabile). Se il
+   test passa già, il problema non c'è: scrivilo nel catalogo e fermati;
+2. se fallisce, correggi il connettore cartelle, poi WebDAV e S3, ciascuno con
+   il suo test. Confluence in una PR a parte.
+
 ---
 
 ## Fase 2 — Installer senza prerequisiti (1.2)
@@ -408,11 +431,19 @@ risultato in `docs/RETRIEVAL_EVALUATION.md` e **non** si applica: anche un
   verifica.
 - Annota anche il tempo per domanda: un reranker su CPU può essere lento.
 
-### Passo 4.2 — Titolo e sezione davanti al passaggio, con i vettori (2.5)
+### Passo 4.2 — Titolo e sezione nell'indice, non nell'estratto (2.5, C-03)
 - In modalità keyword è già stato misurato: +2 domande su 127, non applicato
-  (vedi "Esperimento: titolo e sezione" nel documento di valutazione).
-- Va rimisurato **con la ricerca a vettori**, dove il contesto entra
-  nell'embedding.
+  perché l'estratto mostrato avrebbe avuto un prefisso (vedi "Esperimento:
+  titolo e sezione" nel documento di valutazione).
+- Segui la voce **C-03** del catalogo: il titolo e la sezione vanno solo nel
+  testo indicizzato, l'estratto mostrato resta quello originale. Misura in
+  modalità keyword e poi con la ricerca a vettori.
+
+### Passo 4.2-bis — Altre voci del catalogo
+Nell'ordine indicato in fondo al catalogo: **C-05** (passaggi vicini),
+**C-04** (fusione parole e vettori), **C-07** (citazioni testuali verificate),
+**C-02** (domanda al verificatore). Una voce per PR, ognuna misurata prima e
+dopo.
 
 ### Passo 4.3 — Riformulazione della domanda
 - **Leggi prima** due moduli che esistono già:
@@ -450,6 +481,8 @@ dell'allegato, correzione del 28 ottobre 2026).
   **inventato** in `evaluation/pmi_corpus/`.
 
 ### Passo 5.2 — Connettore IMAP (PR separata)
+- Prima di scrivere codice leggi il connettore IMAP di Onyx (voce **C-25** del
+  catalogo): è MIT e si può riusare con avviso di copyright.
 - Solo lettura: il connettore non deve mai segnare messaggi come letti, spostarli
   o cancellarli.
 - Le credenziali seguono le stesse regole degli altri connettori (mai nei log).
@@ -464,8 +497,10 @@ dell'allegato, correzione del 28 ottobre 2026).
 - Oggi il visualizzatore apre il PDF alla pagina giusta
   (`frontend/src/components/chat/ChatArea.tsx`, vista "PDF Pag. N"), ma non
   evidenzia il passaggio.
-- Serve salvare, durante l'importazione, la posizione del testo nella pagina, e
-  usarla nel visualizzatore.
+- Prima prova la strada della voce **C-06** del catalogo, come fa Kotaemon:
+  passare al visualizzatore l'inizio del passaggio citato e farglielo cercare
+  nella pagina. Solo se la ricerca fallisce troppo spesso, salvare la posizione
+  del testo durante l'importazione.
 - Per le pagine lette con OCR la posizione potrebbe non esserci: in quel caso si
   apre la pagina senza evidenziare, senza errori.
 
@@ -480,6 +515,31 @@ dell'allegato, correzione del 28 ottobre 2026).
   un test che parte da un database creato con lo schema attuale e verifica che,
   dopo la migrazione, documenti, permessi e versioni ci siano ancora.
 - `tests/test_postgres_parity.py` deve restare verde.
+
+### Passo 6.3 — Lettura dei file più robusta (C-15, C-16)
+- **C-15:** lettura dei PDF in un processo separato con tempo massimo.
+- **C-16:** prima il test con un DOCX che dichiara dimensioni false; se passa i
+  controlli attuali, limitare i byte effettivamente letti.
+- Una PR per voce. Possono anche essere anticipate: non dipendono da altre fasi.
+
+---
+
+## Fase 7 — Pulizia del codice (in parallelo, piccole PR)
+
+Questa fase non blocca le altre: si fa a pezzi, quando c'è tempo, una PR per
+passo. Non mescolarla con PR di funzioni nuove.
+
+### Passo 7.1 — Regole di lint in più (C-26)
+Segui la voce **C-26** del catalogo, nell'ordine indicato lì: prima DTZ e B904,
+poi la complessità a 20 con le tre funzioni attuali elencate come eccezioni,
+poi la semplificazione di una funzione per PR. **Non** cambiare il
+comportamento del codice in queste PR: i test devono restare identici.
+
+### Passo 7.2 — Controlli prima del commit (C-27)
+Un `.pre-commit-config.yaml` documentato in `DEVELOPER.md`, facoltativo.
+
+### Passo 7.3 — Stile dei commenti (C-28)
+**STOP:** solo se Nicolò lo decide.
 
 ---
 
