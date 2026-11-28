@@ -84,14 +84,25 @@ def resolve_principals(principals: tuple[str, ...] | list[str], known: dict[str,
 
 def source_allow_list(store: LibraryStore, library_id: str, document: RemoteDocument) -> list[str] | None:
     """La allow-list per il documento, None se segue le regole della biblioteca."""
-    if document.allowed_principals is None:
+    return principals_allow_list(store, library_id, document.allowed_principals, document.name)
+
+
+def principals_allow_list(
+    store: LibraryStore, library_id: str, principals: tuple[str, ...] | None, name: str
+) -> list[str] | None:
+    """Traduce chi vede il file sull'origine nella allow-list per documento.
+
+    Usata dai connettori e dalle cartelle registrate come fonti
+    (core/folder_importer.py): stesse regole per le due strade.
+    """
+    if principals is None:
         return None
-    users = resolve_principals(document.allowed_principals, _known_usernames())
+    users = resolve_principals(principals, _known_usernames())
     if users:
         return users
     _logger.warning(
         "Permessi di %s non traducibili: visibile solo al proprietario della biblioteca e agli amministratori",
-        document.name,
+        name,
     )
     owner = str(store.get_library(library_id).get("owner_id", "") or "")
     # Il proprietario vede comunque i documenti della sua biblioteca: basta

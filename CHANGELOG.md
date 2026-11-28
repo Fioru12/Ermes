@@ -2,6 +2,12 @@
 
 Registro leggibile del lavoro su questo progetto. Per i finding tecnici completi, [docs/AUDIT_2026-08-19.md](docs/AUDIT_2026-08-19.md) e [docs/CODE_REVIEW.md](docs/CODE_REVIEW.md). La roadmap per fasi e il registro delle sessioni (`ROADMAP_V2.md`, `WORK_PROGRESS.md`) sono stati tolti dall'albero pubblico il 18 settembre 2026: la cronologia Git li conserva.
 
+## 2026-11-28 (3) — Permessi NTFS anche per le cartelle registrate come fonti
+
+Le cartelle registrate come fonti (scansione manuale o Folder Watcher) erano la seconda strada con cui una cartella di rete entra in Ermes, e non leggevano i permessi: un file riservato sulla condivisione arrivava a tutta la biblioteca anche dopo la correzione del connettore cartelle. La guida per l'azienda consigliava proprio questa strada. Ora valgono le stesse regole del connettore: chi legge il file sulla condivisione lo vede in Ermes, permessi illeggibili chiudono il documento, un accesso tolto sparisce alla scansione successiva anche se il file non e' cambiato. Si spegne con `ERMES_FOLDER_SOURCES_INHERIT_PERMISSIONS=0`.
+
+Limiti: un file che da riservato diventa leggibile da tutti resta riservato in Ermes finche' un amministratore non toglie la restrizione (nel dubbio si chiude, come per i connettori); le fonti non tolgono ancora i file cancellati dalla cartella (passo 1.8 del piano).
+
 ## 2026-11-28 (2) — Cartelle di rete: ogni file porta con se' chi lo puo' leggere
 
 Il connettore cartelle importava i file della condivisione senza guardarne i permessi: un file che sul NAS leggevano in due diventava visibile a tutta la biblioteca. Ora legge i permessi NTFS di ogni file (pywin32, solo Windows) e li traduce nella allow-list per documento che gia' esiste, come per SharePoint e Google Drive.
