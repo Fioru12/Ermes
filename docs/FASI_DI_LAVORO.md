@@ -118,7 +118,7 @@ cd frontend; npm run lint; npm run build; npm test
 | Fase | Contenuto | Stato |
 |---|---|---|
 | 0 | Misurare ibrida + verifica sulla suite PMI | da fare |
-| 1 | Permessi NTFS nel connettore cartelle | in corso: passo 1.6 fatto (28 novembre 2026), tranne Confluence |
+| 1 | Permessi NTFS nel connettore cartelle | in PR (28 novembre 2026): mancano la prova su una condivisione vera (1.4), le fonti con Folder Watcher (1.7) e Confluence |
 | 2 | Installer senza prerequisiti | da fare |
 | 3 | Utenti pilota e domande vere nel gold set | da fare |
 | 4 | Qualità del recupero (reranker, contesto, riformulazioni) | da fare |
@@ -226,6 +226,8 @@ della biblioteca vedono tutto.
 5. `core/connectors/local_folder.py`: il file da modificare.
 
 ### Passo 1.1 — Decisione prima del codice (STOP)
+
+**Deciso da Nicolò il 28 novembre 2026: opzione A.** I documenti si chiudono anche nelle cartelle gia' collegate.
 Chiedi a Nicolò, **prima di scrivere codice**, come comportarsi quando i permessi
 non si possono leggere (Ermes in Docker su Linux, cartella montata via SMB,
 errore di lettura). Le due opzioni:
@@ -240,7 +242,7 @@ errore di lettura). Le due opzioni:
 Scrivi la risposta nel docstring del connettore.
 
 ### Passo 1.2 — La funzione di traduzione, pura e testabile
-Scrivi in `core/connectors/local_folder.py` una funzione **senza dipendenze da
+Fatto in `core/connectors/ntfs_permissions.py` (modulo a parte, per tenere leggibile il connettore). La consegna era: scrivi una funzione **senza dipendenze da
 Windows** che riceve la descrizione dei permessi già letta e restituisce
 `allowed_principals`. Esempio di firma:
 
@@ -317,6 +319,13 @@ parte quelle richieste dalla decisione del passo 1.1.
 **Fatto quando.** PR verde con codice, test e documenti. **STOP** prima del
 merge: Nicolò deve provarlo su una cartella vera con due utenti Windows diversi.
 Scrivi nella PR i passi esatti di questa prova.
+
+### Passo 1.7 — Le fonti con scansione automatica
+Trovato il 28 novembre 2026: oltre al connettore cartelle, le cartelle si
+possono registrare come **fonti** (`core/folder_importer.py`, scansionate dal
+Folder Watcher). Quella strada non legge i permessi NTFS, e la guida per
+l'azienda la consigliava. Va portata sulle stesse regole del connettore
+(`core/connectors/ntfs_permissions.py`), con i suoi test. PR separata.
 
 ### Passo 1.6 — File cancellati all'origine (C-22) — fatto, tranne Confluence
 Segui la voce **C-22** del catalogo. In una PR separata, **prima** di quella

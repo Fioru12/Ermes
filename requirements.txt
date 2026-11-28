@@ -40,6 +40,11 @@ striprtf==0.0.35
 # pulito) 44 moduli di test fallivano la collezione con ModuleNotFoundError.
 defusedxml==0.7.1
 
+# Permessi NTFS delle cartelle di rete (core/connectors/local_folder.py).
+# Solo Windows: altrove il modulo non esiste e i documenti con permessi da
+# ereditare restano chiusi. Licenza PSF.
+pywin32==311; sys_platform == "win32"
+
 # Configuration
 python-dotenv==1.2.4
 

@@ -2,6 +2,19 @@
 
 Registro leggibile del lavoro su questo progetto. Per i finding tecnici completi, [docs/AUDIT_2026-08-19.md](docs/AUDIT_2026-08-19.md) e [docs/CODE_REVIEW.md](docs/CODE_REVIEW.md). La roadmap per fasi e il registro delle sessioni (`ROADMAP_V2.md`, `WORK_PROGRESS.md`) sono stati tolti dall'albero pubblico il 18 settembre 2026: la cronologia Git li conserva.
 
+## 2026-11-28 (2) — Cartelle di rete: ogni file porta con se' chi lo puo' leggere
+
+Il connettore cartelle importava i file della condivisione senza guardarne i permessi: un file che sul NAS leggevano in due diventava visibile a tutta la biblioteca. Ora legge i permessi NTFS di ogni file (pywin32, solo Windows) e li traduce nella allow-list per documento che gia' esiste, come per SharePoint e Google Drive.
+
+- Leggibile da tutti (Everyone, Authenticated Users, BUILTIN\Users, Domain Users): segue le regole della biblioteca.
+- Leggibile da alcune persone: visibile solo a loro (se esiste un utente Ermes con lo stesso nome) e agli amministratori.
+- Permessi illeggibili, un divieto esplicito, una voce che non si sa valutare: il documento resta chiuso. Vale anche per le cartelle gia' collegate e per Ermes in Docker su Linux, dove i permessi NTFS non si leggono: la prova di connessione lo dice. `inherit_permissions: false` lo spegne.
+- Un permesso tolto sulla condivisione sparisce alla sincronizzazione successiva.
+
+Test: una regola per test, il percorso completo con connettore e store veri, e la lettura dei permessi di un file vero su Windows (con `icacls`). Limiti: i gruppi Windows non vengono espansi nei membri; le cartelle registrate come fonti con il Folder Watcher non leggono ancora i permessi (detto nella guida per l'azienda); manca la prova su una condivisione vera con due utenti.
+
+Rigenerati `THIRD_PARTY_NOTICES.md` (aggiunto pywin32, licenza PSF; aggiornate versioni rimaste indietro) e `sbom.json`. Lo script delle note ignorava i marcatori di piattaforma, e due test sulle licenze sarebbero stati saltati per intero su Linux: ora saltano solo le dipendenze che li' non si installano.
+
 ## 2026-11-28 — File cancellati o modificati all'origine: ora spariscono da Ermes
 
 Un documento importato da un connettore non era collegato al file da cui veniva. Conseguenze, dimostrate con test prima della correzione:

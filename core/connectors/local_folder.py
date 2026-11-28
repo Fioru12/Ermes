@@ -2,6 +2,15 @@
 core/connectors/local_folder.py
 Local Shared Folder / NAS Network Drive Connector for Ermes Knowledge.
 Scans local directories or mounted SMB/NFS network drives for supported documents.
+
+Permessi: con ``inherit_permissions`` (attivo di default) ogni file porta con
+se' chi lo puo' leggere sulla condivisione (permessi NTFS, vedi
+core/connectors/ntfs_permissions.py). Se i permessi non si leggono — Ermes
+non su Windows, pywin32 assente, accesso negato — il documento resta chiuso:
+visibile solo al proprietario della biblioteca e agli amministratori. Vale
+anche per le cartelle collegate prima di questa funzione (decisione del 28
+novembre 2026). ``inherit_permissions: false`` lo spegne: i documenti seguono
+le regole della biblioteca.
 """
 
 from __future__ import annotations
@@ -9,12 +18,25 @@ from __future__ import annotations
 import logging
 import mimetypes
 import os
+import sys
 from pathlib import Path
 from typing import Any
 
 from core.connectors.base import BaseConnector, ListingReport, RemoteDocument
+from core.connectors.ntfs_permissions import ntfs_acl_to_principals, read_ntfs_acl
 
 _logger = logging.getLogger(__name__)
+
+
+def ntfs_permissions_readable() -> bool:
+    """Vero se su questa macchina si possono leggere i permessi NTFS."""
+    if sys.platform != "win32":
+        return False
+    try:
+        import win32security  # type: ignore[import-not-found]  # noqa: F401
+    except ImportError:
+        return False
+    return True
 
 MEDIA_TYPES = {
     ".pdf": "application/pdf",
@@ -43,6 +65,7 @@ class LocalFolderConnector(BaseConnector):
         self.max_files = int(config.get("max_files", 200))
         self.recursive = bool(config.get("recursive", True))
         self.allowed_extensions = set(config.get("extensions", list(SUPPORTED_EXTENSIONS)))
+        self.inherit_permissions = bool(config.get("inherit_permissions", True))
 
     def source_key(self) -> str:
         return f"local_folder:{self.folder_path}"
@@ -60,6 +83,12 @@ class LocalFolderConnector(BaseConnector):
         if not os.access(self.folder_path, os.R_OK):
             return False, f"Permesso di lettura negato per: {self.folder_path}"
 
+        if self.inherit_permissions and not ntfs_permissions_readable():
+            return True, (
+                f"Cartella raggiungibile e leggibile ({self.folder_path}), ma i permessi NTFS non si possono leggere"
+                " su questa installazione: i documenti resteranno chiusi (visibili solo al proprietario della"
+                " biblioteca e agli amministratori). Ermes deve girare su Windows per ereditarli."
+            )
         return True, f"Cartella raggiungibile e leggibile ({self.folder_path})"
 
     def fetch_documents(self) -> list[RemoteDocument]:
@@ -112,6 +141,7 @@ class LocalFolderConnector(BaseConnector):
                 guessed, _ = mimetypes.guess_type(file_path.name)
                 media_type = guessed or "application/octet-stream"
 
+            principals = ntfs_acl_to_principals(read_ntfs_acl(file_path)) if self.inherit_permissions else None
             return RemoteDocument(
                 id=doc_id,
                 name=file_path.name,
@@ -125,6 +155,7 @@ class LocalFolderConnector(BaseConnector):
                     "file_size": stat.st_size,
                     "extension": ext,
                 },
+                allowed_principals=principals,
             )
         except Exception as e:
             _logger.error("Errore durante la lettura del file %s: %s", file_path, e)

@@ -50,7 +50,9 @@ def dipendenze_dichiarate() -> dict[str, str]:
     che divergono ogni volta che un pin cambia prima di un `pip install`."""
     dichiarate: dict[str, str] = {}
     for riga in (RADICE / "requirements.txt").read_text(encoding="utf-8").splitlines():
-        riga = riga.split("#")[0].strip()
+        # Il marcatore d'ambiente (`; sys_platform == "win32"`) non fa parte
+        # della versione.
+        riga = riga.split("#")[0].split(";")[0].strip()
         if not riga or riga.startswith("-"):
             continue
         nome = re.split(r"[=<>!\[]", riga)[0].strip()
