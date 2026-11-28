@@ -29,6 +29,22 @@ class RemoteDocument:
 
 
 @dataclass(frozen=True)
+class ListingReport:
+    """Cosa ha visto l'ultima scansione completa (`fetch_documents`).
+
+    Serve a togliere da Ermes i file spariti dall'origine. `seen_ids` contiene
+    l'id di ogni file che rispetta i filtri del connettore, anche se il suo
+    download e' fallito: un file illeggibile non e' un file cancellato.
+    `complete` e' vero solo se l'origine e' stata elencata tutta, senza errori
+    e senza superare `max_files`. Con un elenco incompleto non si cancella
+    niente.
+    """
+
+    seen_ids: frozenset[str]
+    complete: bool
+
+
+@dataclass(frozen=True)
 class SyncResult:
     connector_type: str
     total_found: int
@@ -52,6 +68,21 @@ class BaseConnector(ABC):
 
     def __init__(self, config: dict[str, Any]) -> None:
         self.config = config
+        # Impostato da fetch_documents nei connettori che sanno dire se hanno
+        # elencato tutta l'origine. None: il connettore non lo sa, e i file
+        # spariti dall'origine non vengono tolti dopo una scansione completa.
+        self.listing: ListingReport | None = None
+
+    def source_key(self) -> str:
+        """Identifica l'origine (quale cartella, quale bucket) dentro una biblioteca.
+
+        Due origini dello stesso tipo nella stessa biblioteca devono avere
+        chiavi diverse, altrimenti la scansione dell'una toglierebbe i file
+        dell'altra. Il valore predefinito va bene per i connettori i cui id
+        sono unici a livello globale (Google Drive, Microsoft 365). Non deve
+        contenere credenziali.
+        """
+        return self.__class__.__name__
 
     @abstractmethod
     def test_connection(self) -> tuple[bool, str]:

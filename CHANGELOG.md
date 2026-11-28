@@ -2,6 +2,19 @@
 
 Registro leggibile del lavoro su questo progetto. Per i finding tecnici completi, [docs/AUDIT_2026-08-19.md](docs/AUDIT_2026-08-19.md) e [docs/CODE_REVIEW.md](docs/CODE_REVIEW.md). La roadmap per fasi e il registro delle sessioni (`ROADMAP_V2.md`, `WORK_PROGRESS.md`) sono stati tolti dall'albero pubblico il 18 settembre 2026: la cronologia Git li conserva.
 
+## 2026-11-28 — File cancellati o modificati all'origine: ora spariscono da Ermes
+
+Un documento importato da un connettore non era collegato al file da cui veniva. Conseguenze, dimostrate con test prima della correzione:
+
+- **un file cancellato all'origine restava cercabile.** Per la cartella di rete, WebDAV e S3 nessuna cancellazione veniva mai segnalata. Per Google Drive e Microsoft 365 le cancellazioni arrivavano, ma venivano cercate con l'id remoto tra gli id dei documenti di Ermes, quindi non si trovavano: lo scheduler andava in errore, l'API non cancellava niente. L'API confrontava anche i nomi dei file, e avrebbe potuto togliere un caricamento manuale con lo stesso nome;
+- **un file rinominato all'origine** lasciava in Ermes anche la copia con il nome vecchio.
+
+Ora ogni documento importato da un connettore e' collegato al suo id remoto (nuova tabella `connector_documents`, anche su PostgreSQL e nello script di migrazione). Un file cancellato all'origine toglie il suo documento, sia quando lo segnala il delta del connettore sia quando manca da una scansione completa. Per la scansione completa, il connettore cartelle, WebDAV e S3 dichiarano se hanno elencato tutto: se c'e' stato un errore, se la cartella non e' raggiungibile o se si e' superato `max_files`, non si toglie niente. Due cartelle nella stessa biblioteca non si tolgono i file a vicenda. I caricamenti manuali non vengono mai toccati.
+
+Limiti noti: i documenti importati dai connettori prima di questa versione non sono collegati e vanno tolti a mano se spariscono dall'origine; un file remoto con lo stesso nome di un documento caricato a mano diventa una nuova versione di quel documento (comportamento gia' esistente) e non viene tolto se sparisce dall'origine; Confluence resta da sistemare.
+
+Due test dello scheduler usavano uno store finto e verificavano il comportamento sbagliato (cancellare con l'id remoto); ora usano lo store vero. Voce C-22 di `docs/CATALOGO_IDEE_COMPETITOR.md`.
+
 ## 2026-10-30 (6) — LICENSE: il testo GPL-3.0 completo e ufficiale
 
 Il file `LICENSE` non era la GPL-3.0: era una versione tagliata e modificata (264 righe invece di 674, le sezioni 7-17 con il solo titolo, alcune parole cambiate, il copyright della Free Software Foundation sostituito). La GPL non si puo' alterare, e GitHub infatti non la riconosceva (mostrava "Other"). Ora e' il testo ufficiale di gnu.org, integro. Il titolare del copyright resta in `NOTICE`, che dichiara "GPL v3.0 or later". La licenza e' dichiarata anche in `pyproject.toml` e `frontend/package.json` (`GPL-3.0-or-later`). Il test precedente controllava solo il titolo; quello nuovo controlla le 18 sezioni, il copyright FSF e la lunghezza, e fallisce con il testo vecchio.

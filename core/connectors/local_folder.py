@@ -12,7 +12,7 @@ import os
 from pathlib import Path
 from typing import Any
 
-from core.connectors.base import BaseConnector, RemoteDocument
+from core.connectors.base import BaseConnector, ListingReport, RemoteDocument
 
 _logger = logging.getLogger(__name__)
 
@@ -44,6 +44,9 @@ class LocalFolderConnector(BaseConnector):
         self.recursive = bool(config.get("recursive", True))
         self.allowed_extensions = set(config.get("extensions", list(SUPPORTED_EXTENSIONS)))
 
+    def source_key(self) -> str:
+        return f"local_folder:{self.folder_path}"
+
     def test_connection(self) -> tuple[bool, str]:
         if not str(self.folder_path):
             return False, "Percorso cartella non specificato"
@@ -60,55 +63,69 @@ class LocalFolderConnector(BaseConnector):
         return True, f"Cartella raggiungibile e leggibile ({self.folder_path})"
 
     def fetch_documents(self) -> list[RemoteDocument]:
+        self.listing = None
         ok, msg = self.test_connection()
         if not ok:
             _logger.warning("LocalFolderConnector test_connection fallito: %s", msg)
             return []
 
         documents: list[RemoteDocument] = []
+        seen: set[str] = set()
+        complete = True
         walker = self.folder_path.rglob("*") if self.recursive else self.folder_path.glob("*")
 
-        for file_path in walker:
-            if len(documents) >= self.max_files:
-                _logger.info("Raggiunto il limite massimo di %d file", self.max_files)
-                break
+        try:
+            for file_path in walker:
+                if not file_path.is_file():
+                    continue
 
-            if not file_path.is_file():
-                continue
+                ext = file_path.suffix.lower()
+                if ext not in self.allowed_extensions:
+                    continue
 
-            ext = file_path.suffix.lower()
-            if ext not in self.allowed_extensions:
-                continue
-
-            try:
-                stat = file_path.stat()
-                content = file_path.read_bytes()
-                media_type = MEDIA_TYPES.get(ext)
-                if not media_type:
-                    guessed, _ = mimetypes.guess_type(file_path.name)
-                    media_type = guessed or "application/octet-stream"
+                if len(documents) >= self.max_files:
+                    _logger.info("Raggiunto il limite massimo di %d file", self.max_files)
+                    complete = False
+                    break
 
                 rel_path = str(file_path.relative_to(self.folder_path))
                 doc_id = f"local_folder:{rel_path}"
+                seen.add(doc_id)
+                document = self._read_file(file_path, ext, rel_path, doc_id)
+                if document is not None:
+                    documents.append(document)
+        except OSError as error:
+            # Una sottocartella illeggibile o la condivisione che si stacca a
+            # meta' scansione: l'elenco non e' completo.
+            _logger.warning("Scansione di %s interrotta: %s", self.folder_path, error)
+            complete = False
 
-                documents.append(
-                    RemoteDocument(
-                        id=doc_id,
-                        name=file_path.name,
-                        content=content,
-                        media_type=media_type,
-                        source_url=f"file://{file_path}",
-                        last_modified=str(int(stat.st_mtime)),
-                        metadata={
-                            "relative_path": rel_path,
-                            "absolute_path": str(file_path),
-                            "file_size": stat.st_size,
-                            "extension": ext,
-                        },
-                    )
-                )
-            except Exception as e:
-                _logger.error("Errore durante la lettura del file %s: %s", file_path, e)
-                continue
-
+        self.listing = ListingReport(seen_ids=frozenset(seen), complete=complete)
         return documents
+
+    def _read_file(self, file_path: Path, ext: str, rel_path: str, doc_id: str) -> RemoteDocument | None:
+        try:
+            stat = file_path.stat()
+            content = file_path.read_bytes()
+            media_type = MEDIA_TYPES.get(ext)
+            if not media_type:
+                guessed, _ = mimetypes.guess_type(file_path.name)
+                media_type = guessed or "application/octet-stream"
+
+            return RemoteDocument(
+                id=doc_id,
+                name=file_path.name,
+                content=content,
+                media_type=media_type,
+                source_url=f"file://{file_path}",
+                last_modified=str(int(stat.st_mtime)),
+                metadata={
+                    "relative_path": rel_path,
+                    "absolute_path": str(file_path),
+                    "file_size": stat.st_size,
+                    "extension": ext,
+                },
+            )
+        except Exception as e:
+            _logger.error("Errore durante la lettura del file %s: %s", file_path, e)
+            return None

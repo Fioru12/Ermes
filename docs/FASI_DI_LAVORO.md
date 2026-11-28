@@ -118,7 +118,7 @@ cd frontend; npm run lint; npm run build; npm test
 | Fase | Contenuto | Stato |
 |---|---|---|
 | 0 | Misurare ibrida + verifica sulla suite PMI | da fare |
-| 1 | Permessi NTFS nel connettore cartelle | da fare |
+| 1 | Permessi NTFS nel connettore cartelle | in corso: passo 1.6 fatto (28 novembre 2026), tranne Confluence |
 | 2 | Installer senza prerequisiti | da fare |
 | 3 | Utenti pilota e domande vere nel gold set | da fare |
 | 4 | Qualità del recupero (reranker, contesto, riformulazioni) | da fare |
@@ -318,7 +318,7 @@ parte quelle richieste dalla decisione del passo 1.1.
 merge: Nicolò deve provarlo su una cartella vera con due utenti Windows diversi.
 Scrivi nella PR i passi esatti di questa prova.
 
-### Passo 1.6 — File cancellati all'origine (C-22)
+### Passo 1.6 — File cancellati all'origine (C-22) — fatto, tranne Confluence
 Segui la voce **C-22** del catalogo. In una PR separata, **prima** di quella
 dei permessi NTFS:
 1. scrivi il test che dimostra il problema (importa due file da una cartella,

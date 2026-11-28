@@ -165,6 +165,69 @@ class DocumentsMixin(StoreBase):
             ).fetchall()
         return {row["content_hash"]: row["id"] for row in rows}
 
+    def link_remote_document(self, library_id: str, source_key: str, remote_id: str, document_id: str) -> str | None:
+        """Registra che `remote_id` dell'origine `source_key` e' il documento `document_id`.
+
+        Restituisce l'id del documento a cui il file remoto era collegato
+        prima, se era un altro: e' la versione vecchia di un file modificato.
+        """
+        with self._lock, self._connection() as connection:
+            row = connection.execute(
+                "SELECT document_id FROM connector_documents WHERE library_id = ? AND source_key = ? AND remote_id = ?",
+                (library_id, source_key, remote_id),
+            ).fetchone()
+            connection.execute(
+                """
+                INSERT INTO connector_documents (library_id, source_key, remote_id, document_id, updated_at)
+                VALUES (?, ?, ?, ?, ?)
+                ON CONFLICT (library_id, source_key, remote_id)
+                DO UPDATE SET document_id = excluded.document_id, updated_at = excluded.updated_at
+                """,
+                (library_id, source_key, remote_id, document_id, self._timestamp()),
+            )
+        previous = str(row["document_id"]) if row else None
+        return previous if previous and previous != document_id else None
+
+    def remote_document(self, library_id: str, source_key: str, remote_id: str) -> str | None:
+        """Id del documento collegato al file remoto, se c'e'."""
+        with self._connection() as connection:
+            row = connection.execute(
+                "SELECT document_id FROM connector_documents WHERE library_id = ? AND source_key = ? AND remote_id = ?",
+                (library_id, source_key, remote_id),
+            ).fetchone()
+        return str(row["document_id"]) if row else None
+
+    def remote_documents(self, library_id: str, source_key: str) -> dict[str, str]:
+        """Id remoto -> id del documento, per i file importati da un'origine."""
+        with self._connection() as connection:
+            rows = connection.execute(
+                "SELECT remote_id, document_id FROM connector_documents WHERE library_id = ? AND source_key = ?",
+                (library_id, source_key),
+            ).fetchall()
+        return {str(row["remote_id"]): str(row["document_id"]) for row in rows}
+
+    def unlink_remote_document(self, library_id: str, source_key: str, remote_id: str) -> str | None:
+        """Toglie il collegamento e restituisce l'id del documento collegato, se c'era."""
+        with self._lock, self._connection() as connection:
+            row = connection.execute(
+                "SELECT document_id FROM connector_documents WHERE library_id = ? AND source_key = ? AND remote_id = ?",
+                (library_id, source_key, remote_id),
+            ).fetchone()
+            connection.execute(
+                "DELETE FROM connector_documents WHERE library_id = ? AND source_key = ? AND remote_id = ?",
+                (library_id, source_key, remote_id),
+            )
+        return str(row["document_id"]) if row else None
+
+    def remote_link_count(self, document_id: str) -> int:
+        """Quanti file remoti sono collegati a un documento (lo stesso contenuto puo' stare in due file)."""
+        with self._connection() as connection:
+            row = connection.execute(
+                "SELECT COUNT(*) AS n FROM connector_documents WHERE document_id = ?",
+                (document_id,),
+            ).fetchone()
+        return int(row["n"]) if row else 0
+
     def replace_document_index(
         self,
         library_id: str,
@@ -261,6 +324,7 @@ class DocumentsMixin(StoreBase):
             connection.execute("DELETE FROM document_chunks WHERE document_id = ?", (document_id,))
             connection.execute("DELETE FROM document_versions WHERE document_id = ?", (document_id,))
             connection.execute("DELETE FROM document_acls WHERE document_id = ?", (document_id,))
+            connection.execute("DELETE FROM connector_documents WHERE document_id = ?", (document_id,))
             connection.execute("DELETE FROM ingestion_jobs WHERE document_id = ?", (document_id,))
             connection.execute(
                 "DELETE FROM documents WHERE id = ? AND library_id = ?",
@@ -313,6 +377,7 @@ class DocumentsMixin(StoreBase):
                 """,
                 (library_id,),
             )
+            connection.execute("DELETE FROM connector_documents WHERE library_id = ?", (library_id,))
             connection.execute("DELETE FROM ingestion_jobs WHERE library_id = ?", (library_id,))
             connection.execute("DELETE FROM import_sources WHERE library_id = ?", (library_id,))
             connection.execute("DELETE FROM chat_integrations WHERE library_id = ?", (library_id,))

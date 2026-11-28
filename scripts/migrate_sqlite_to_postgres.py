@@ -37,6 +37,7 @@ TABLES_ORDER = [
     "document_chunks",
     "document_versions",
     "document_acls",
+    "connector_documents",
     "ingestion_jobs",
     "import_sources",
     "chat_integrations",

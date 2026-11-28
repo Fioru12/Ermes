@@ -120,6 +120,22 @@ CREATE TABLE IF NOT EXISTS document_acls (
 CREATE INDEX IF NOT EXISTS acls_by_username
     ON document_acls(username);
 
+-- Da quale file remoto viene un documento importato da un connettore:
+-- serve a toglierlo quando sparisce dall'origine e a sostituirlo quando
+-- cambia. source_key distingue due origini dello stesso tipo nella
+-- stessa biblioteca (due cartelle di rete). I caricamenti manuali non
+-- hanno righe qui e non vengono mai toccati da una sincronizzazione.
+CREATE TABLE IF NOT EXISTS connector_documents (
+    library_id TEXT NOT NULL REFERENCES libraries(id) ON DELETE CASCADE,
+    source_key TEXT NOT NULL,
+    remote_id TEXT NOT NULL,
+    document_id TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+    updated_at TEXT NOT NULL,
+    PRIMARY KEY (library_id, source_key, remote_id)
+);
+CREATE INDEX IF NOT EXISTS connector_documents_by_document
+    ON connector_documents(document_id);
+
 CREATE TABLE IF NOT EXISTS ingestion_jobs (
     id TEXT PRIMARY KEY,
     library_id TEXT NOT NULL REFERENCES libraries(id) ON DELETE CASCADE,
@@ -183,6 +199,7 @@ EXPECTED_TABLES = {
     "document_chunks",
     "document_versions",
     "document_acls",
+    "connector_documents",
     "ingestion_jobs",
     "import_sources",
     "chat_integrations",

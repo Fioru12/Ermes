@@ -15,7 +15,7 @@ from urllib.parse import unquote, urljoin
 import httpx
 from defusedxml import ElementTree
 
-from core.connectors.base import BaseConnector, RemoteDocument
+from core.connectors.base import BaseConnector, ListingReport, RemoteDocument
 
 _logger = logging.getLogger(__name__)
 
@@ -112,7 +112,11 @@ class WebDAVConnector(BaseConnector):
             _logger.warning("Test connessione WebDAV fallito per %s: %s", target_url, exc)
             return False, f"Errore di rete verso WebDAV ({target_url}): {exc}"
 
+    def source_key(self) -> str:
+        return f"webdav:{self._get_target_url()}"
+
     def fetch_documents(self) -> list[RemoteDocument]:
+        self.listing = None
         ok, msg = self.test_connection()
         if not ok:
             _logger.warning("WebDAVConnector test_connection fallito: %s", msg)
@@ -120,6 +124,8 @@ class WebDAVConnector(BaseConnector):
 
         target_url = self._get_target_url()
         documents: list[RemoteDocument] = []
+        seen: set[str] = set()
+        complete = False
 
         try:
             with self._get_client() as client:
@@ -137,12 +143,9 @@ class WebDAVConnector(BaseConnector):
                 # I namespace WebDAV standard usano 'DAV:'
 
                 ns = {"d": "DAV:"}
+                complete = True
 
                 for response_node in root.findall("d:response", ns):
-                    if len(documents) >= self.max_files:
-                        _logger.info("Raggiunto limite massimo di %d file da WebDAV", self.max_files)
-                        break
-
                     href_node = response_node.find("d:href", ns)
                     if href_node is None or not href_node.text:
                         continue
@@ -161,6 +164,11 @@ class WebDAVConnector(BaseConnector):
                     if ext not in self.allowed_extensions:
                         continue
 
+                    if len(documents) >= self.max_files:
+                        _logger.info("Raggiunto limite massimo di %d file da WebDAV", self.max_files)
+                        complete = False
+                        break
+
                     # Estrai metadata se presenti
                     last_mod_node = response_node.find(".//d:getlastmodified", ns)
                     last_mod_str = last_mod_node.text.strip() if last_mod_node is not None and last_mod_node.text else ""
@@ -169,6 +177,7 @@ class WebDAVConnector(BaseConnector):
                     file_size = int(size_node.text.strip()) if size_node is not None and size_node.text and size_node.text.isdigit() else 0
 
                     file_url = urljoin(self.base_url, href)
+                    seen.add(file_url)
 
                     # Scarica il file
                     try:
@@ -194,5 +203,9 @@ class WebDAVConnector(BaseConnector):
 
         except Exception as exc:
             _logger.error("Errore durante fetch_documents da WebDAV %s: %s", target_url, exc)
+            complete = False
 
+        # PROPFIND con Depth 1 elenca solo il primo livello: e' tutto quello
+        # che questo connettore importa, quindi l'elenco e' completo per lui.
+        self.listing = ListingReport(seen_ids=frozenset(seen), complete=complete)
         return documents

@@ -403,7 +403,7 @@ Valore e costo: **A** alto, **M** medio, **B** basso.
 
 ### Connettori
 
-#### C-22 · Togliere da Ermes i file cancellati all'origine
+#### C-22 · Togliere da Ermes i file cancellati all'origine — fatto (28 novembre 2026), tranne Confluence
 
 - **Da dove:** Onyx, `backend/onyx/connectors/interfaces.py`: oltre al
   caricamento completo e a quello incrementale, un connettore può restituire
@@ -424,6 +424,13 @@ Valore e costo: **A** alto, **M** medio, **B** basso.
 - **Riuso:** idea.
 - **Valore A · Costo B.** Riguarda la riservatezza quanto i permessi NTFS:
   va fatto nella fase 1.
+- **Esito (28 novembre 2026).** Il problema era piu' ampio del previsto: i
+  documenti non erano collegati al loro id remoto, quindi anche le
+  cancellazioni di Google Drive e Microsoft 365 non trovavano il documento, e
+  un file rinominato lasciava la copia vecchia. Corretto con la tabella
+  `connector_documents` e l'elenco completo/incompleto dei connettori
+  cartelle, WebDAV e S3. Test in `tests/test_connector_deletions.py`.
+  Restano: Confluence, e i documenti importati prima della correzione.
 
 #### C-23 · Aggiornare i permessi senza riscaricare i file
 
